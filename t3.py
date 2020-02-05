@@ -89,38 +89,40 @@ def soil():
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
             time.sleep(0.5)
+            try:
+                values1 = mcp.read_adc(SOIL)
+                sum =  (values1*100)/1023
 
-            values1 = mcp.read_adc(SOIL)
-            sum =  (values1*100)/1023
+                #print (registration_id)
+                print("SOIL 3 : ",values1)
+                db.child(cardcheck).child("SOIL").set('%.0f'%sum)
+                
+                water = db.child(cardcheck).child("STATUS").child("WATER").get()
+                compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
+                
+                            
+                opens = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
+                closes = db.child(cardcheck).child("SENSER").child("LIGHT").child("CLOSE").get()
+                check = db.child("CHECK").child("CHECKWATER").get()   
+                
 
-            #print (registration_id)
-            print("SOIL 3 : ",values1)
-            db.child(cardcheck).child("SOIL").set('%.0f'%sum)
-            
-            water = db.child(cardcheck).child("STATUS").child("WATER").get()
-            compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
-            
-                        
-            opens = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
-            closes = db.child(cardcheck).child("SENSER").child("LIGHT").child("CLOSE").get()
-            check = db.child("CHECK").child("CHECKWATER").get()   
-            
-
-            if check.val()==0:
-                if water.val() == 0:
-                    if compost.val() == 0:
-                        if values1 <= int(opens.val()):
+                if check.val()==0:
+                    if water.val() == 0:
+                        if compost.val() == 0:
+                            if values1 <= int(opens.val()):
+                                GPIO.output(gpio_1, False)
+                                GPIO.output(gpio_2, False)
+                                GPIO.output(gpio_4, False)
+                            if values1 >= int(closes.val()):
+                                GPIO.output(gpio_1, True)
+                                GPIO.output(gpio_2, True)
+                                GPIO.output(gpio_4, True)
+                        else:                
                             GPIO.output(gpio_1, False)
-                            GPIO.output(gpio_2, False)
                             GPIO.output(gpio_4, False)
-                        if values1 >= int(closes.val()):
-                            GPIO.output(gpio_1, True)
                             GPIO.output(gpio_2, True)
-                            GPIO.output(gpio_4, True)
-                    else:                
-                        GPIO.output(gpio_1, False)
-                        GPIO.output(gpio_4, False)
-                        GPIO.output(gpio_2, True)
+            except:
+                soil()
 
 def compost():
     while True:
@@ -227,19 +229,20 @@ def date():
             set = date + timedelta(days=40)          
             newdate = datetime.strftime(set,"%d/%m/%Y")
             d1 = now.strftime("%d/%m/%Y")
-                
-            if newdate == d1:
-                if notify.val()==0:
-                    push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
-                    token = db.child("Token").get()
-                    registration_id = token.val()
-                    message_title = "แจ้งเตือนแปลง3"
-                    message_body = "ใกล้วันเก็บเกี่ยวแล้ว"
-                    result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
-                    print(result)
-                    db.child(cardcheck).child("NOTFY").set(1)
-            else:
-                db.child(cardcheck).child("NOTFY").set(0)
+            if hh%8==0 and mm == '00':    
+                if newdate == d1:
+                    if notify.val()==0:
+                        push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
+                        token = db.child("Token").get()
+                        registration_id = token.val()
+                        message_title = "แจ้งเตือนแปลง3"
+                        message_body = "ใกล้วันเก็บเกี่ยวแล้ว"
+                        result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
+                        print(result)
+                        db.child(cardcheck).child("NOTFY").set(1)
+                        time.sleep(60)
+                else:
+                    db.child(cardcheck).child("NOTFY").set(0)
     
     
 def savedb():    
@@ -319,6 +322,9 @@ def onetime():
             
 def detect():
     while True:
+        te = datetime.now()
+        hh = int(te.strftime("%H"))
+        mm = te.strftime("%M")
         result = db.child(cardcheck).child("SET").get()
         modeGrow = db.child(cardcheck).child("RESULT").get()
         notify = db.child(cardcheck).child("NOTFY").get()
@@ -351,19 +357,21 @@ def detect():
                 #print('Detect color 1 %.0f'%cal)
                 db.child(cardcheck).child("GROW").set('%.0f'%cal)
                 check = '%.0f'%cal
-                if int(check) >= 80:
-                    if notify.val()==0:
-                        push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
-                        token = db.child("Token").get()
-                        registration_id = token.val()
-                        message_title = "แจ้งเตือนแปลง3"
-                        message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
-                        result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
-                        print(result)
-                        db.child(cardcheck).child("NOTFY").set(1)
-                        db.child(cardcheck).child("SET").set(0)
-                else:
-                    db.child(cardcheck).child("NOTFY").set(0)
+                if hh%3==0 and mm == '00':
+                    if int(check) >= 80:
+                        if notify.val()==0:
+                            push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
+                            token = db.child("Token").get()
+                            registration_id = token.val()
+                            message_title = "แจ้งเตือนแปลง3"
+                            message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
+                            result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
+                            print(result)
+                            db.child(cardcheck).child("NOTFY").set(1)
+                            time.sleep(60)
+                            
+                    else:
+                        db.child(cardcheck).child("NOTFY").set(0)
                     
                 #print (check)
 
@@ -388,20 +396,21 @@ def detect():
                     area = cv2.contourArea(cnt)         
                     if area > threshold_area:                   
                          count = count+1
-                         
-                if count >= 1:
-                    if notify.val()==0:
-                        push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
-                        token = db.child("Token").get()
-                        registration_id = token.val()
-                        message_title = "แจ้งเตือนแปลง3"
-                        message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
-                        result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
-                        print(result)
-                        db.child(cardcheck).child("NOTFY").set(1)
-                        db.child(cardcheck).child("SET").set(0)
-                else:
-                    db.child(cardcheck).child("NOTFY").set(0)
+                if hh%3==0 and mm == '00': 
+                    if count >= 1:
+                        if notify.val()==0:
+                            push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
+                            token = db.child("Token").get()
+                            registration_id = token.val()
+                            message_title = "แจ้งเตือนแปลง3"
+                            message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
+                            result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
+                            print(result)
+                            db.child(cardcheck).child("NOTFY").set(1)
+                            time.sleep(60)
+                            
+                    else:
+                        db.child(cardcheck).child("NOTFY").set(0)
                
                 #print('detect count 1 :',count)  
                 db.child(cardcheck).child("GROW").set(count)
