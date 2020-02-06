@@ -99,6 +99,7 @@ def soil():
                 
                 water = db.child(cardcheck).child("STATUS").child("WATER").get()
                 compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
+                checksoil = db.child(cardcheck).child("CHECKSOIL").get()
                 
                             
                 opens = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
@@ -109,14 +110,19 @@ def soil():
                 if check.val()==0:
                     if water.val() == 0:
                         if compost.val() == 0:
-                            if values1 <= int(opens.val()):
-                                GPIO.output(gpio_1, False)
-                                GPIO.output(gpio_2, False)
-                                GPIO.output(gpio_4, False)
-                            if values1 >= int(closes.val()):
-                                GPIO.output(gpio_1, True)
-                                GPIO.output(gpio_2, True)
-                                GPIO.output(gpio_4, True)
+                            if checksoil.val() == 0:
+                                if values1 <= int(opens.val()):
+                                    GPIO.output(gpio_1, False)
+                                    GPIO.output(gpio_2, False)
+                                    GPIO.output(gpio_4, False)
+                                    db.child("CARD1").child("CHECKSOIL").set(1)
+                                    db.child("CARD2").child("CHECKSOIL").set(1)
+                                if values1 >= int(closes.val()):
+                                    GPIO.output(gpio_1, True)
+                                    GPIO.output(gpio_2, True)
+                                    GPIO.output(gpio_4, True)
+                                    db.child("CARD1").child("CHECKSOIL").set(0)
+                                    db.child("CARD2").child("CHECKSOIL").set(0)
                         else:                
                             GPIO.output(gpio_1, False)
                             GPIO.output(gpio_4, False)
@@ -215,7 +221,7 @@ def date():
             year = db.child(cardcheck).child("DAYGROW").child("YEAR").get()
             startdate = str(day.val())+"/"+str(month.val())+"/"+str(year.val())
             date = datetime.strptime(startdate,"%d/%m/%Y")
-            print("daygrow 1 : ",date)
+            #print("daygrow 1 : ",date)
                 
             now = datetime.now()
                 
