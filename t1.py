@@ -211,31 +211,34 @@ def date():
     while True:
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
-            te = datetime.now()
-            hh = int(te.strftime("%H"))
-            mm = te.strftime("%M")
-            ss = te.strftime("%S")
-            
-            notify = db.child(cardcheck).child("NOTFY").get()
-            day = db.child(cardcheck).child("DAYGROW").child("DAY").get()
-            month = db.child(cardcheck).child("DAYGROW").child("MONTH").get()
-            year = db.child(cardcheck).child("DAYGROW").child("YEAR").get()
-            startdate = str(day.val())+"/"+str(month.val())+"/"+str(year.val())
-            date = datetime.strptime(startdate,"%d/%m/%Y")
-            #print("daygrow 1 : ",date)
+            try:
+                te = datetime.now()
+                hh = int(te.strftime("%H"))
+                mm = te.strftime("%M")
+                ss = te.strftime("%S")
                 
-            now = datetime.now()
-                
-            dayStart=now.day
-            dayEnd=date.day
-            resultday = now-date
-                
-            #db.child(cardcheck).update({"DATE": resultday.days})
-            db.child(cardcheck).child("DATE").set(resultday.days)
-                
-            set = date + timedelta(days=40)          
-            newdate = datetime.strftime(set,"%d/%m/%Y")
-            d1 = now.strftime("%d/%m/%Y")
+                notify = db.child(cardcheck).child("NOTFY").get()
+                day = db.child(cardcheck).child("DAYGROW").child("DAY").get()
+                month = db.child(cardcheck).child("DAYGROW").child("MONTH").get()
+                year = db.child(cardcheck).child("DAYGROW").child("YEAR").get()
+                startdate = str(day.val())+"/"+str(month.val())+"/"+str(year.val())
+                date = datetime.strptime(startdate,"%d/%m/%Y")
+                #print("daygrow 1 : ",date)
+                    
+                now = datetime.now()
+                    
+                dayStart=now.day
+                dayEnd=date.day
+                resultday = now-date
+                    
+                #db.child(cardcheck).update({"DATE": resultday.days})
+                db.child(cardcheck).child("DATE").set(resultday.days)
+                    
+                set = date + timedelta(days=40)          
+                newdate = datetime.strftime(set,"%d/%m/%Y")
+                d1 = now.strftime("%d/%m/%Y")
+            except:
+                date()
 
             if hh%8==0 and mm == '00':
                 if newdate == d1:
