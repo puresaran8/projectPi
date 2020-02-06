@@ -62,33 +62,35 @@ def ldr():
     while True:
         result = db.child(cardcheck).child("SET").get()        
         if result.val()==1:
-            time.sleep(0.5)
+            time.sleep(2)
+            try:
             
-            
-            data = rc_time(pin_to_circuit)
-            db.child(cardcheck).child("LIGHT").set(data)
-            light = db.child(cardcheck).child("STATUS").child("LIGHT").get()
-            
-            open = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
-            close = db.child(cardcheck).child("SENSER").child("LIGHT").child("CLOSE").get()
-            
-            light = db.child(cardcheck).child("STATUS").child("LIGHT").get()        
-            
-            if light.val() == 0 :
- 
-                print("LDR 3 : ",rc_time(pin_to_circuit))
+                data = rc_time(pin_to_circuit)
+                db.child(cardcheck).child("LIGHT").set(data)
+                light = db.child(cardcheck).child("STATUS").child("LIGHT").get()
                 
-                if rc_time(pin_to_circuit) <= int(open.val()):
-                    GPIO.output(gpio_light, False)
-                if rc_time(pin_to_circuit) >= int(close.val()):
-                    GPIO.output(gpio_light, True)
-            
+                open = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
+                close = db.child(cardcheck).child("SENSER").child("LIGHT").child("CLOSE").get()
+                
+                light = db.child(cardcheck).child("STATUS").child("LIGHT").get()        
+                
+                if light.val() == 0 :
+     
+                    print("LDR 3 : ",rc_time(pin_to_circuit))
+                    
+                    if rc_time(pin_to_circuit) <= int(open.val()):
+                        GPIO.output(gpio_light, False)
+                    if rc_time(pin_to_circuit) >= int(close.val()):
+                        GPIO.output(gpio_light, True)
+                
+            except:
+                print("error ldr()3");
         
 def soil():
     while True:
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
-            time.sleep(0.5)
+            time.sleep(2)
             try:
                 values1 = mcp.read_adc(SOIL)
                 sum =  (values1*100)/1023
@@ -128,13 +130,13 @@ def soil():
                             GPIO.output(gpio_4, False)
                             GPIO.output(gpio_2, True)
             except:
-                soil()
+                print("error soil()2");
 
 def compost():
     while True:
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
-            time.sleep(0.5)
+            time.sleep(2)
 
             HH = db.child(cardcheck).child("TIMEGROW").child("H").get()
             MM = db.child(cardcheck).child("TIMEGROW").child("M").get()
@@ -163,7 +165,7 @@ def compost():
                             GPIO.output(gpio_1, False)
                             GPIO.output(gpio_3, False)
                             GPIO.output(gpio_4, False)
-                            time.sleep(1)
+                            time.sleep(2)
                         else:
                             GPIO.output(gpio_1, True)
                             GPIO.output(gpio_3, True)
@@ -203,7 +205,7 @@ def cam():
                 cam.stop()
                 storage = firebase.storage()
                 storage.child("picture").child("picture3.jpg").put("picture3.jpg")
-                #time.sleep(1)
+                #time.sleep(2)
                 time.sleep(60)
        
 def date():
@@ -237,21 +239,20 @@ def date():
                 newdate = datetime.strftime(set,"%d/%m/%Y")
                 d1 = now.strftime("%d/%m/%Y")
             except:
-                date()
-            if hh%8==0 and mm == '00':    
-                if newdate == d1:
-                    if notify.val()==0:
-                        push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
-                        token = db.child("Token").get()
-                        registration_id = token.val()
-                        message_title = "แจ้งเตือนแปลง3"
-                        message_body = "ใกล้วันเก็บเกี่ยวแล้ว"
-                        result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
-                        print(result)
-                        db.child(cardcheck).child("NOTFY").set(1)
-                        time.sleep(60)
-                else:
-                    db.child(cardcheck).child("NOTFY").set(0)
+                #date()
+                print("error date()3");
+    
+            if newdate == d1:
+                if notify.val()==0:
+                    push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
+                    token = db.child("Token").get()
+                    registration_id = token.val()
+                    message_title = "แจ้งเตือนแปลง3"
+                    message_body = "ใกล้วันเก็บเกี่ยวแล้ว"
+                    result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
+                    print(result)
+                    db.child(cardcheck).child("NOTFY").set(1)
+
     
     
 def savedb():    
@@ -285,10 +286,10 @@ def savedb():
                 "TIME": times,
                 "GROW" : grow.val(),}
                 db.child(cardcheck).child("DATA").push(data)
-                db.child("DB").child(year.val()).child(month.val()).child(day.val()).child(name.val()).push(1)
+                db.child("DB").child(year.val()).child(month.val()).child(day.val()).child(name.val()).push(data)
                 #ขาดค่าดีเทค
                 #db.child("DB").child(name.val()).child(datecheck).push(data)
-                #time.sleep(1)
+                #time.sleep(2)
                 time.sleep(60)
     
 def onetime():
@@ -339,34 +340,35 @@ def detect():
         notify = db.child(cardcheck).child("NOTFY").get()
         if result.val()==1:
             if modeGrow.val()==1:
-                frame = cv2.imread('picture3.jpg')
-                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                hsv_channels = cv2.split(hsv)
+                if hh%10==0 and mm == '00':
+                    frame = cv2.imread('picture3.jpg')
+                    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+                    hsv_channels = cv2.split(hsv)
 
-                rows = frame.shape[0]
-                cols = frame.shape[1]
+                    rows = frame.shape[0]
+                    cols = frame.shape[1]
 
-                for i in range(0, rows):
-                    for j in range(0, cols):
-                        h = hsv_channels[0][i][j]
+                    for i in range(0, rows):
+                        for j in range(0, cols):
+                            h = hsv_channels[0][i][j]
 
-                        if h > 30 and h < 90:
-                            hsv_channels[2][i][j] = 255
-                        else:
-                            hsv_channels[2][i][j] = 0
+                            if h > 30 and h < 90:
+                                hsv_channels[2][i][j] = 255
+                            else:
+                                hsv_channels[2][i][j] = 0
 
 
 
-                height, width = hsv_channels[2].shape
-                count = cv2.countNonZero(hsv_channels[2])
-                size = hsv_channels[2].size
+                    height, width = hsv_channels[2].shape
+                    count = cv2.countNonZero(hsv_channels[2])
+                    size = hsv_channels[2].size
 
-                cal=(count/size)*100
-                #print('%.0f'%cal)
-                #print('Detect color 1 %.0f'%cal)
-                db.child(cardcheck).child("GROW").set('%.0f'%cal)
-                check = '%.0f'%cal
-                if hh%3==0 and mm == '00':
+                    cal=(count/size)*100
+                    #print('%.0f'%cal)
+                    #print('Detect color 1 %.0f'%cal)
+                    db.child(cardcheck).child("GROW").set('%.0f'%cal)
+                    check = '%.0f'%cal
+
                     if int(check) >= 80:
                         if notify.val()==0:
                             push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
@@ -377,35 +379,32 @@ def detect():
                             result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
                             print(result)
                             db.child(cardcheck).child("NOTFY").set(1)
-                            time.sleep(60)
-                            
-                    else:
-                        db.child(cardcheck).child("NOTFY").set(0)
-                    
-                #print (check)
 
-            else:
-            
-                image = cv2.imread("picture3.jpg")
+                        
+                    #print (check)
 
-                hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+                else:
+                
+                    image = cv2.imread("picture3.jpg")
 
-                weaker = np.array([0,0,100])
-                stronger = np.array([10,255,255])
+                    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-                mask = cv2.inRange(hsv, weaker, stronger)
-                contours, hierarchy= cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                    weaker = np.array([0,0,100])
+                    stronger = np.array([10,255,255])
 
-                cv2.drawContours(image, contours, -1, (0,255,0), 3)
+                    mask = cv2.inRange(hsv, weaker, stronger)
+                    contours, hierarchy= cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-                threshold_area = 10000
-                count = 0
+                    cv2.drawContours(image, contours, -1, (0,255,0), 3)
 
-                for cnt in contours:        
-                    area = cv2.contourArea(cnt)         
-                    if area > threshold_area:                   
-                         count = count+1
-                if hh%3==0 and mm == '00': 
+                    threshold_area = 10000
+                    count = 0
+
+                    for cnt in contours:        
+                        area = cv2.contourArea(cnt)         
+                        if area > threshold_area:                   
+                             count = count+1
+
                     if count >= 1:
                         if notify.val()==0:
                             push_service = FCMNotification(api_key="AAAAChe61dw:APA91bFD-sByErGofjSVFneDtFtd8O7X1eyDo_xSONZ14TzLhMGjAbegk_lggXH4-5ALBdQFwJFi8JDGJ651MVgl8DkfefAmpUAtCNb7gquDwANfRZS9iOcMvO3JUJoJRP9cCiaHMu9P")
@@ -416,15 +415,11 @@ def detect():
                             result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
                             print(result)
                             db.child(cardcheck).child("NOTFY").set(1)
-                            time.sleep(60)
-                            
-                    else:
-                        db.child(cardcheck).child("NOTFY").set(0)
-               
-                #print('detect count 1 :',count)  
-                db.child(cardcheck).child("GROW").set(count)
-                
-    
+
+                    #print('detect count 1 :',count)  
+                    db.child(cardcheck).child("GROW").set(count)
+                    
+        
     
 def rc_time (pin_to_circuit):
     count = 0
