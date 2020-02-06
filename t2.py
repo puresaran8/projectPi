@@ -63,11 +63,12 @@ def ldr():
         result = db.child(cardcheck).child("SET").get()        
         if result.val()==1:
             try:
-                time.sleep(2)
+                time.sleep(5)
                 
                 
                 data = rc_time(pin_to_circuit)
-                db.child(cardcheck).child("LIGHT").set(data)
+                #db.child(cardcheck).child("LIGHT").set(data)
+                db.child(cardcheck).update({"LIGHT": data})
                 light = db.child(cardcheck).child("STATUS").child("LIGHT").get()
                 
                 open = db.child(cardcheck).child("SENSER").child("LIGHT").child("OPEN").get()
@@ -91,14 +92,15 @@ def soil():
     while True:
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
-            time.sleep(2)
+            time.sleep(5)
             try:
                 values1 = mcp.read_adc(SOIL)
                 sum =  (values1*100)/1023
 
                 #print (registration_id)
                 print("SOIL 2 : ",values1)
-                db.child(cardcheck).child("SOIL").set('%.0f'%sum)
+                #db.child(cardcheck).child("SOIL").set('%.0f'%sum)
+                db.child(cardcheck).update({"SOIL": '%.0f'%sum})
                 
                 water = db.child(cardcheck).child("STATUS").child("WATER").get()
                 compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
@@ -118,14 +120,18 @@ def soil():
                                     GPIO.output(gpio_1, False)
                                     GPIO.output(gpio_2, False)
                                     GPIO.output(gpio_4, False)
-                                    db.child("CARD1").child("CHECKSOIL").set(1)
-                                    db.child("CARD3").child("CHECKSOIL").set(1)
+                                    #db.child("CARD1").child("CHECKSOIL").set(1)
+                                    #db.child("CARD3").child("CHECKSOIL").set(1)
+                                    db.child("CARD1").update({"CHECKSOIL": 1})
+                                    db.child("CARD3").update({"CHECKSOIL": 1})
                                 if values1 >= int(closes.val()):
                                     GPIO.output(gpio_1, True)
                                     GPIO.output(gpio_2, True)
                                     GPIO.output(gpio_4, True)
-                                    db.child("CARD1").child("CHECKSOIL").set(0)
-                                    db.child("CARD3").child("CHECKSOIL").set(0)
+                                    #db.child("CARD1").child("CHECKSOIL").set(0)
+                                    #db.child("CARD3").child("CHECKSOIL").set(0)
+                                    db.child("CARD1").update({"CHECKSOIL": 0})
+                                    db.child("CARD3").update({"CHECKSOIL": 0})
                         else:                
                             GPIO.output(gpio_1, False)
                             GPIO.output(gpio_4, False)
@@ -137,27 +143,28 @@ def compost():
     while True:
         result = db.child(cardcheck).child("SET").get()
         if result.val()==1:
-            time.sleep(2)
-
-            HH = db.child(cardcheck).child("TIMEGROW").child("H").get()
-            MM = db.child(cardcheck).child("TIMEGROW").child("M").get()
-            water = db.child(cardcheck).child("STATUS").child("WATER").get()
-            
-            #cha = str(HH.val())+':'+str(MM.val())+':0'            
-            #datetime_object = datetime.strptime(cha, '%H:%M:%S')
-            #newdate = datetime.strftime(datetime_object,'%H:%M:%S')
-            
-            cha = str(HH.val())+':'+str(MM.val())            
-            datetime_object = datetime.strptime(cha, '%H:%M')
-            newdate = datetime.strftime(datetime_object,'%H:%M')
-            
-            
-            te = datetime.now()
-            datecheck = te.strftime("%H:%M:%S")
-            
-            compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
-            check = db.child("CHECK").child("CHECKWATER").get()           
-
+            time.sleep(5)
+            try:
+                HH = db.child(cardcheck).child("TIMEGROW").child("H").get()
+                MM = db.child(cardcheck).child("TIMEGROW").child("M").get()
+                water = db.child(cardcheck).child("STATUS").child("WATER").get()
+                
+                #cha = str(HH.val())+':'+str(MM.val())+':0'            
+                #datetime_object = datetime.strptime(cha, '%H:%M:%S')
+                #newdate = datetime.strftime(datetime_object,'%H:%M:%S')
+                
+                cha = str(HH.val())+':'+str(MM.val())            
+                datetime_object = datetime.strptime(cha, '%H:%M')
+                newdate = datetime.strftime(datetime_object,'%H:%M')
+                
+                
+                te = datetime.now()
+                datecheck = te.strftime("%H:%M:%S")
+                
+                compost = db.child(cardcheck).child("STATUS").child("COMPOST").get()
+                check = db.child("CHECK").child("CHECKWATER").get()           
+            except:
+                print("error compost()2");
             if check.val()==0:
                 if compost.val() == 0:
                     #db.child(cardcheck).child("STATUS").child("WATER").set(0)
@@ -166,7 +173,7 @@ def compost():
                             GPIO.output(gpio_1, False)
                             GPIO.output(gpio_3, False)
                             GPIO.output(gpio_4, False)
-                            time.sleep(2)
+                            time.sleep(5)
                         else:
                             GPIO.output(gpio_1, True)
                             GPIO.output(gpio_3, True)
@@ -206,7 +213,7 @@ def cam():
                 cam.stop()
                 storage = firebase.storage()
                 storage.child("picture").child("picture2.jpg").put("picture2.jpg")
-                #time.sleep(2)
+                #time.sleep(5)
                 time.sleep(60)
        
 def date():
@@ -233,8 +240,8 @@ def date():
                 dayEnd=date.day
                 resultday = now-date
                     
-                #db.child(cardcheck).update({"DATE": resultday.days})
-                db.child(cardcheck).child("DATE").set(resultday.days)
+                db.child(cardcheck).update({"DATE": resultday.days})
+                #db.child(cardcheck).child("DATE").set(resultday.days)
                     
                 set = date + timedelta(days=40)          
                 newdate = datetime.strftime(set,"%d/%m/%Y")
@@ -252,7 +259,8 @@ def date():
                     message_body = "ใกล้วันเก็บเกี่ยวแล้ว"
                     result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
                     print(result)
-                    db.child(cardcheck).child("NOTFY").set(1)
+                    #db.child(cardcheck).child("NOTFY").set(1)
+                    db.child(cardcheck).update({"NOTFY": 1})
 
     
     
@@ -290,7 +298,7 @@ def savedb():
                 db.child("DB").child(year.val()).child(month.val()).child(day.val()).child(name.val()).push(data)
                 #ขาดค่าดีเทค
                 #db.child("DB").child(name.val()).child(datecheck).push(data)
-                #time.sleep(2)
+                #time.sleep(5)
                 time.sleep(60)
     
 def onetime():
@@ -316,7 +324,8 @@ def onetime():
                 cam.stop()
                 storage = firebase.storage()
                 storage.child("picture").child("picture2.jpg").put("picture2.jpg")
-                db.child(cardcheck).child("PHOTO").set(0)
+                #db.child(cardcheck).child("PHOTO").set(0)
+                db.child(cardcheck).update({"PHOTO": 0})
                 
             if light.val() == 1:
                 GPIO.output(gpio_light, False)
@@ -367,7 +376,8 @@ def detect():
                     cal=(count/size)*100
                     #print('%.0f'%cal)
                     #print('Detect color 1 %.0f'%cal)
-                    db.child(cardcheck).child("GROW").set('%.0f'%cal)
+                    #db.child(cardcheck).child("GROW").set('%.0f'%cal)
+                    db.child(cardcheck).update({"GROW": '%.0f'%cal})
                     check = '%.0f'%cal
 
                     if int(check) >= 80:
@@ -379,7 +389,8 @@ def detect():
                             message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
                             result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
                             print(result)
-                            db.child(cardcheck).child("NOTFY").set(1)
+                            #db.child(cardcheck).child("NOTFY").set(1)
+                            db.child(cardcheck).update({"NOTFY": 1})
 
                     #print (check)
 
@@ -414,11 +425,13 @@ def detect():
                             message_body = "ใกล้เก็บเกี่ยวได้แล้ว"
                             result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title, message_body=message_body)
                             print(result)
-                            db.child(cardcheck).child("NOTFY").set(1)
+                            #db.child(cardcheck).child("NOTFY").set(1)
+                            db.child(cardcheck).update({"NOTFY": 1})
 
                    
                     #print('detect count 1 :',count)  
-                    db.child(cardcheck).child("GROW").set(count)
+                    #db.child(cardcheck).child("GROW").set(count)
+                    db.child(cardcheck).update({"GROW": count})
                     
         
     
