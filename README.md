@@ -10,4 +10,5 @@ sudo apt-get update<br />
 sudo raspi-config<br />
 sudo apt-get install xrdp<br />
 ifconfig<br />
+192.168.0.15 <br />
 192.168.43.110 
